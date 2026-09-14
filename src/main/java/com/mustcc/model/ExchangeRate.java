@@ -8,13 +8,16 @@ public class ExchangeRate {
     private int rateId;
     private Currency base;
     private Currency target;
+    private Integer sourceId;   // nullable — matches exchange_rates.source_id
     private BigDecimal rate;
     private LocalDate rateDate;
 
-    public ExchangeRate(int rateId, Currency base, Currency target, BigDecimal rate, LocalDate rateDate) {
+    public ExchangeRate(int rateId, Currency base, Currency target, Integer sourceId,
+                         BigDecimal rate, LocalDate rateDate) {
         this.rateId = rateId;
         this.base = base;
         this.target = target;
+        this.sourceId = sourceId;
         if (rate == null || rate.signum() <= 0) {
             throw new IllegalArgumentException("Exchange rate must be positive");
         }
@@ -25,6 +28,7 @@ public class ExchangeRate {
     public int getRateId() { return rateId; }
     public Currency getBase() { return base; }
     public Currency getTarget() { return target; }
+    public Integer getSourceId() { return sourceId; }
     public BigDecimal getRate() { return rate; }
     public LocalDate getRateDate() { return rateDate; }
 
