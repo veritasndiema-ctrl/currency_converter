@@ -187,16 +187,26 @@ CREATE TABLE error_log (
     FOREIGN KEY (user_id) REFERENCES users(user_id)
 );
 
--- ---------- Seed data (minimal, for demo) ----------
+-- ---------- Seed data ----------
+-- Wider than the original demo set so every new feature (favorites,
+-- fees, rate history, login) has something realistic to work against:
+-- more currencies/pairs, several days of rates per pair (for history),
+-- a fee structure on the API source, and one seeded demo user.
 
 INSERT INTO countries (country_name, country_code) VALUES
-    ('Uganda', 'UG'), ('United States', 'US'), ('United Kingdom', 'GB'), ('Kenya', 'KE');
+    ('Uganda', 'UG'), ('United States', 'US'), ('United Kingdom', 'GB'),
+    ('Kenya', 'KE'), ('Tanzania', 'TZ'), ('Rwanda', 'RW'),
+    ('Germany', 'DE'), ('Japan', 'JP');
 
 INSERT INTO currencies (currency_code, currency_name, symbol, country_id) VALUES
     ('UGX', 'Ugandan Shilling', 'USh', 1),
     ('USD', 'US Dollar', '$', 2),
     ('GBP', 'British Pound', '£', 3),
-    ('KES', 'Kenyan Shilling', 'KSh', 4);
+    ('KES', 'Kenyan Shilling', 'KSh', 4),
+    ('TZS', 'Tanzanian Shilling', 'TSh', 5),
+    ('RWF', 'Rwandan Franc', 'FRw', 6),
+    ('EUR', 'Euro', '€', 7),
+    ('JPY', 'Japanese Yen', '¥', 8);
 
 INSERT INTO roles (role_name) VALUES ('ADMIN'), ('USER');
 
@@ -204,9 +214,48 @@ INSERT INTO rate_sources (source_name, source_type, api_endpoint) VALUES
     ('Manual Entry', 'MANUAL', NULL),
     ('ExchangeRate-API', 'API', 'https://api.exchangerate-api.com/v4/latest');
 
-INSERT INTO currency_pairs (base_currency_id, target_currency_id) VALUES
-    (2, 1), (1, 2), (2, 3), (3, 2);
+-- A 1.5% fee (min 0.50, max 25.00) on conversions priced via the API
+-- source — exercises FeeStructureDAO / ConversionService.convertWithFee.
+INSERT INTO fee_structures (source_id, fee_percentage, min_fee, max_fee) VALUES
+    (2, 1.50, 0.50, 25.00);
 
+INSERT INTO currency_pairs (base_currency_id, target_currency_id) VALUES
+    (2, 1),  -- USD -> UGX
+    (1, 2),  -- UGX -> USD
+    (2, 3),  -- USD -> GBP
+    (3, 2),  -- GBP -> USD
+    (2, 4),  -- USD -> KES
+    (2, 5),  -- USD -> TZS
+    (2, 6),  -- USD -> RWF
+    (7, 2),  -- EUR -> USD
+    (2, 8);  -- USD -> JPY
+
+-- Latest rate per pair (one row per day, per the unique key on
+-- base/target/rate_date). Only today's row is needed for exchange_rates
+-- since ConversionService always looks up the most recent one.
 INSERT INTO exchange_rates (base_currency_id, target_currency_id, source_id, rate, rate_date) VALUES
-    (2, 1, 1, 3700.00, CURDATE()),
-    (1, 2, 1, 0.00027, CURDATE());
+    (2, 1, 2, 3700.00, CURDATE()),
+    (1, 2, 2, 0.00027, CURDATE()),
+    (2, 3, 2, 0.78, CURDATE()),
+    (3, 2, 2, 1.28, CURDATE()),
+    (2, 4, 2, 129.50, CURDATE()),
+    (2, 5, 2, 2620.00, CURDATE()),
+    (2, 6, 2, 1330.00, CURDATE()),
+    (7, 2, 2, 1.09, CURDATE()),
+    (2, 8, 2, 147.20, CURDATE());
+
+-- A short run of USD->UGX history over the last few days, so "view rate
+-- history" has more than one row to show without waiting for real usage.
+INSERT INTO rate_history (base_currency_id, target_currency_id, rate, recorded_at) VALUES
+    (2, 1, 3685.00, NOW() - INTERVAL 4 DAY),
+    (2, 1, 3690.50, NOW() - INTERVAL 3 DAY),
+    (2, 1, 3695.00, NOW() - INTERVAL 2 DAY),
+    (2, 1, 3702.00, NOW() - INTERVAL 1 DAY),
+    (2, 1, 3700.00, NOW());
+
+-- One demo login: username demo_user, password Demo@1234 (real bcrypt
+-- hash, cost 12). Useful for a first run without going through
+-- registration.
+INSERT INTO users (username, email, password_hash, role_id) VALUES
+    ('demo_user', 'demo_user@example.com',
+     '$2b$12$.4EteSMnkr1tqIxPJnsZ9OSZP4ekbXYO7BDQgcxkjj6AnsCVQJDgi', 2);
