@@ -35,29 +35,34 @@ public final class DatabaseConnection {
         Properties props = new Properties();
         try (InputStream in = DatabaseConnection.class.getClassLoader()
                 .getResourceAsStream(CONFIG_FILE)) {
-            if (in == null) {
-                throw new DataAccessException(
-                        "Missing " + CONFIG_FILE + " on the classpath. Copy " +
-                        "src/main/resources/db.properties.example to " +
-                        "src/main/resources/db.properties and fill in your " +
-                        "own database credentials.");
+            if (in != null) {
+                props.load(in);
             }
-            props.load(in);
         } catch (IOException e) {
             throw new DataAccessException("Failed to read " + CONFIG_FILE, e);
         }
 
-        URL = require(props, "db.url");
-        USER = require(props, "db.user");
-        PASSWORD = require(props, "db.password");
+        URL = require(props, "db.url", "DB_URL", "db.url");
+        USER = require(props, "db.user", "DB_USER", "db.user");
+        PASSWORD = require(props, "db.password", "DB_PASSWORD", "db.password");
     }
 
-    private static String require(Properties props, String key) {
-        String value = props.getProperty(key);
+    private static String require(Properties props, String key, String environmentKey, String systemPropertyKey) {
+        String value = firstNonBlank(System.getenv(environmentKey),
+                System.getProperty(systemPropertyKey), props.getProperty(key));
         if (value == null || value.isBlank()) {
-            throw new DataAccessException("Missing required property '" + key + "' in db.properties");
+            throw new DataAccessException("Missing required database setting '" + environmentKey + "'");
         }
         return value;
+    }
+
+    private static String firstNonBlank(String... values) {
+        for (String value : values) {
+            if (value != null && !value.isBlank()) {
+                return value;
+            }
+        }
+        return null;
     }
 
     private static DatabaseConnection instance;
