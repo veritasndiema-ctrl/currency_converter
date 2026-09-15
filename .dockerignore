@@ -1,0 +1,12 @@
+target/
+.git/
+.github/
+.azure/
+.idea/
+.vscode/
+*.iml
+src/main/resources/db.properties
+src/main/resources/db.properties.save*
+README.md
+docs/
+sql/
