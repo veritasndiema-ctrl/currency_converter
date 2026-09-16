@@ -1,6 +1,7 @@
 package com.mustcc;
 
 import com.mustcc.exception.AuthException;
+import com.mustcc.exception.DataAccessException;
 import com.mustcc.exception.InvalidCurrencyException;
 import com.mustcc.exception.RateUnavailableException;
 import com.mustcc.model.Conversion;
@@ -41,7 +42,11 @@ public class Main {
             mainMenu();
         } finally {
             if (currentSessionId != -1) {
-                authService.logout(currentSessionId);
+                try {
+                    authService.logout(currentSessionId);
+                } catch (DataAccessException e) {
+                    System.out.println("Warning: could not close the login session: " + e.getMessage());
+                }
             }
             scanner.close();
         }
@@ -72,6 +77,8 @@ public class Main {
             System.out.println("Welcome back, " + currentUser.getUsername() + "!");
         } catch (AuthException e) {
             System.out.println("Login failed: " + e.getMessage());
+        } catch (DataAccessException e) {
+            System.out.println("Login unavailable: " + e.getMessage());
         }
     }
 
@@ -84,6 +91,8 @@ public class Main {
             System.out.println("Registered " + newUser.getUsername() + ". Please log in.");
         } catch (AuthException e) {
             System.out.println("Registration failed: " + e.getMessage());
+        } catch (DataAccessException e) {
+            System.out.println("Registration unavailable: " + e.getMessage());
         }
     }
 
@@ -130,6 +139,8 @@ public class Main {
             System.out.println("Result: " + result);
         } catch (InvalidCurrencyException | RateUnavailableException e) {
             System.out.println("Conversion failed: " + e.getMessage());
+        } catch (DataAccessException e) {
+            System.out.println("Conversion unavailable: " + e.getMessage());
         }
     }
 
@@ -147,13 +158,20 @@ public class Main {
             }
         } catch (InvalidCurrencyException | RateUnavailableException e) {
             System.out.println("Conversion failed: " + e.getMessage());
+        } catch (DataAccessException e) {
+            System.out.println("Conversion unavailable: " + e.getMessage());
         }
     }
 
     private static BigDecimal promptAmount() {
         while (true) {
             try {
-                return new BigDecimal(prompt("Amount: "));
+                BigDecimal amount = new BigDecimal(prompt("Amount: "));
+                if (amount.signum() <= 0) {
+                    System.out.println("Amount must be greater than zero.");
+                    continue;
+                }
+                return amount;
             } catch (NumberFormatException e) {
                 System.out.println("Please enter a valid number.");
             }
@@ -175,6 +193,8 @@ public class Main {
             }
         } catch (InvalidCurrencyException e) {
             System.out.println("Lookup failed: " + e.getMessage());
+        } catch (DataAccessException e) {
+            System.out.println("Rate history unavailable: " + e.getMessage());
         }
     }
 
@@ -192,11 +212,15 @@ public class Main {
     }
 
     private static void listFavorites() {
-        List<Favorite> favorites = favoritesService.listFavorites(currentUser);
-        if (favorites.isEmpty()) {
-            System.out.println("No favorites yet.");
-        } else {
-            favorites.forEach(System.out::println);
+        try {
+            List<Favorite> favorites = favoritesService.listFavorites(currentUser);
+            if (favorites.isEmpty()) {
+                System.out.println("No favorites yet.");
+            } else {
+                favorites.forEach(System.out::println);
+            }
+        } catch (DataAccessException e) {
+            System.out.println("Favorites unavailable: " + e.getMessage());
         }
     }
 
@@ -208,6 +232,8 @@ public class Main {
             System.out.println("Added " + from + " -> " + to + " to favorites.");
         } catch (InvalidCurrencyException e) {
             System.out.println("Failed: " + e.getMessage());
+        } catch (DataAccessException e) {
+            System.out.println("Favorites unavailable: " + e.getMessage());
         }
     }
 
@@ -219,17 +245,23 @@ public class Main {
             System.out.println("Removed " + from + " -> " + to + " from favorites.");
         } catch (InvalidCurrencyException e) {
             System.out.println("Failed: " + e.getMessage());
+        } catch (DataAccessException e) {
+            System.out.println("Favorites unavailable: " + e.getMessage());
         }
     }
 
     // ---------- Conversion history ----------
 
     private static void conversionHistory() {
-        List<Conversion> history = conversionService.history(currentUser, 10);
-        if (history.isEmpty()) {
-            System.out.println("No conversions yet.");
-        } else {
-            history.forEach(System.out::println);
+        try {
+            List<Conversion> history = conversionService.history(currentUser, 10);
+            if (history.isEmpty()) {
+                System.out.println("No conversions yet.");
+            } else {
+                history.forEach(System.out::println);
+            }
+        } catch (DataAccessException e) {
+            System.out.println("Conversion history unavailable: " + e.getMessage());
         }
     }
 

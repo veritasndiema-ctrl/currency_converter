@@ -92,7 +92,7 @@
                             <!-- Main class -->
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>com.mustcc.Main</mainClass>
+                                    <mainClass>com.mustcc.CurrencyConverterGUI</mainClass>
                                 </transformer>
                             </transformers>
 

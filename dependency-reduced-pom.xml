@@ -30,7 +30,7 @@
             <configuration>
               <transformers>
                 <transformer>
-                  <mainClass>com.mustcc.Main</mainClass>
+                  <mainClass>com.mustcc.CurrencyConverterGUI</mainClass>
                 </transformer>
               </transformers>
               <filters>

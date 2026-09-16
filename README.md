@@ -24,10 +24,11 @@
    ```
    java -jar target/currency-converter.jar
    ```
-   You'll land on a menu: log in (try the seeded `demo_user` / `Demo@1234`), register
-   a new account, or continue as a guest. From there, a menu drives everything —
-   conversions, fee-aware conversions, rate history, favorites, and (if logged in)
-   your own conversion history.
+  This opens the Java Swing desktop app. Sign in with the seeded `demo_user` /
+  `Demo@1234`, create a new account, or continue as a guest. The app includes
+  conversions, fee-aware conversions, rate history, favorites, and (if logged in)
+  your own conversion history. The original terminal UI remains available with
+  `java -cp target/currency-converter.jar com.mustcc.Main`.
 
 ## Structure
 
