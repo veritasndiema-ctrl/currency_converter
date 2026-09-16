@@ -35,14 +35,14 @@ public class RateHistoryDAO extends BaseDAO {
         String sql = "SELECT * FROM rate_history WHERE base_currency_id = ? AND target_currency_id = ? " +
                 "AND recorded_at >= (NOW() - INTERVAL ? DAY) ORDER BY recorded_at DESC";
         List<RateHistoryEntry> entries = new ArrayList<>();
+        Currency base = currencyDAO.findById(baseId).orElseThrow();
+        Currency target = currencyDAO.findById(targetId).orElseThrow();
         try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, baseId);
             stmt.setInt(2, targetId);
             stmt.setInt(3, days);
             try (ResultSet rs = stmt.executeQuery()) {
-                Currency base = currencyDAO.findById(baseId).orElseThrow();
-                Currency target = currencyDAO.findById(targetId).orElseThrow();
                 while (rs.next()) {
                     entries.add(new RateHistoryEntry(
                             rs.getInt("history_id"), base, target,

@@ -26,18 +26,19 @@ public class ExchangeRateDAO extends BaseDAO {
             try (ResultSet rs = stmt.executeQuery()) {
                 if (!rs.next()) return Optional.empty();
 
+                int rateId = rs.getInt("rate_id");
+                int sourceIdRaw = rs.getInt("source_id");
+                Integer sourceId = rs.wasNull() ? null : sourceIdRaw;
+                var rate = rs.getBigDecimal("rate");
+                var rateDate = rs.getDate("rate_date").toLocalDate();
+
                 Currency base = currencyDAO.findById(baseCurrencyId)
                         .orElseThrow(() -> new DataAccessException("Base currency not found: " + baseCurrencyId));
                 Currency target = currencyDAO.findById(targetCurrencyId)
                         .orElseThrow(() -> new DataAccessException("Target currency not found: " + targetCurrencyId));
 
-                int sourceIdRaw = rs.getInt("source_id");
-                Integer sourceId = rs.wasNull() ? null : sourceIdRaw;
-
                 return Optional.of(new ExchangeRate(
-                        rs.getInt("rate_id"), base, target, sourceId,
-                        rs.getBigDecimal("rate"),
-                        rs.getDate("rate_date").toLocalDate()
+                        rateId, base, target, sourceId, rate, rateDate
                 ));
             }
         } catch (SQLException e) {
